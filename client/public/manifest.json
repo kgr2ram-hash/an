@@ -1,0 +1,13 @@
+{
+  "name": "Annur Community Portal",
+  "short_name": "Annur",
+  "description": "Your local community portal for Annur, Tamil Nadu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF7",
+  "theme_color": "#0C4A3E",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

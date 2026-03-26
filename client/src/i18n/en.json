@@ -1,0 +1,136 @@
+{
+  "nav": {
+    "home": "Home",
+    "officials": "Officials",
+    "jobs": "Jobs",
+    "learn": "Learn",
+    "healthcare": "Health Care",
+    "services": "Services",
+    "events": "Events",
+    "admin": "Admin"
+  },
+  "home": {
+    "welcome": "Welcome to Annur",
+    "subtitle": "Your Local Community Portal",
+    "nextBus": "Next Bus",
+    "fullList": "Full List",
+    "featuredServices": "Our Services",
+    "latestJobs": "Latest Jobs",
+    "viewAll": "View All",
+    "government": "Govt",
+    "private": "Private",
+    "moreServices": "More Services",
+    "latestArticles": "Latest News & Articles"
+  },
+  "officials": {
+    "title": "Officials",
+    "subtitle": "Local government officials and contacts",
+    "emergencyTitle": "Emergency Numbers",
+    "email": "Email",
+    "party": "Organization"
+  },
+  "jobs": {
+    "title": "Jobs",
+    "subtitle": "Latest employment opportunities",
+    "deadline": "Deadline",
+    "company": "Company",
+    "contact": "Contact",
+    "apply": "Apply Now",
+    "noJobs": "No jobs available at the moment.",
+    "knowMore": "Know More",
+    "experience": "Experience",
+    "buildResume": "Build Your Resume",
+    "resumeDescription": "Create a professional resume for free using open-source tools.",
+    "learnCoding": "Learn Coding for Free",
+    "codingDescription": "Start your coding journey with these free resources."
+  },
+  "learn": {
+    "title": "Learn",
+    "subtitle": "Educational articles and awareness",
+    "readMore": "Read More",
+    "featured": "Featured"
+  },
+  "healthcare": {
+    "title": "Health Care",
+    "subtitle": "Health insurance, programs and facilities",
+    "insurance": "Insurance",
+    "program": "Program",
+    "facilitiesTitle": "Healthcare Facilities",
+    "hospitals": "Hospitals & Clinics",
+    "labs": "Diagnostic Labs",
+    "pharmacies": "Pharmacies"
+  },
+  "services": {
+    "title": "Services",
+    "subtitle": "Local services directory",
+    "categories": {
+      "medical": "Medical Care",
+      "tuition": "Tuition Centre",
+      "repair": "Bike Repair",
+      "ac_service": "AC Services",
+      "courier": "Courier",
+      "e_seva": "E-Seva Centre",
+      "stationery": "Stationery",
+      "ticket": "Ticket Booking",
+      "photography": "Photography",
+      "saloon": "Saloon & Beauty",
+      "other": "Other"
+    },
+    "all": "All",
+    "contact": "Contact",
+    "address": "Address",
+    "owner": "Owner",
+    "viewOnMaps": "View on Maps",
+    "addYourService": "Add Your Service",
+    "submitService": "Submit Your Business",
+    "submitDescription": "Fill in the details below to list your business. It will be reviewed and published by our team.",
+    "submissionSuccess": "Thank You!",
+    "submissionReview": "Your submission has been received and is under review.",
+    "backToAll": "Back to Services",
+    "categorySubtitle": "Browse businesses in this category",
+    "categoryLabel": "Category",
+    "businessName": "Business Name (English)",
+    "businessNameTa": "Business Name (Tamil)",
+    "descriptionLabel": "Description",
+    "mapsUrl": "Google Maps URL",
+    "submitBtn": "Submit for Review"
+  },
+  "bus": {
+    "title": "Bus Schedules",
+    "departure": "Departure",
+    "destination": "Destination",
+    "operator": "Operator",
+    "route": "Route Info",
+    "allDestinations": "All Destinations",
+    "filterBy": "Filter by destination",
+    "totalBuses": "Total buses"
+  },
+  "events": {
+    "title": "Events & Festivals",
+    "subtitle": "Upcoming events in Annur"
+  },
+  "complaints": {
+    "title": "File a Complaint",
+    "subtitle": "Report issues to Annur Town Panchayat"
+  },
+  "directory": {
+    "title": "Contact Directory",
+    "subtitle": "Searchable phone book of Annur"
+  },
+  "newsfeed": {
+    "title": "News Feed",
+    "subtitle": "Latest updates from Annur"
+  },
+  "footer": {
+    "description": "Your trusted local community information portal.",
+    "quickLinks": "Quick Links",
+    "contactUs": "Contact Us",
+    "rights": "All rights reserved."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong.",
+    "noData": "No data available.",
+    "search": "Search..."
+  }
+}

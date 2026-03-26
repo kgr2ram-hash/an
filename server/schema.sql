@@ -142,6 +142,13 @@ CREATE TABLE service_submissions (
   reviewed_at TIMESTAMP NULL
 );
 
+CREATE TABLE uploads (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  filename VARCHAR(255) UNIQUE NOT NULL,
+  data_url LONGTEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Default admin (password: admin123)
 INSERT INTO admins (username, password_hash, role) VALUES
 ('admin', '$2b$10$placeholder', 'super_admin');

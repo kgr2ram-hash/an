@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "sync": "node sync_to_railway.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

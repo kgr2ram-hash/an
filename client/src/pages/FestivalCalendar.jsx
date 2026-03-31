@@ -1,8 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import PageHeader from '../components/PageHeader.jsx'
 import SEO from '../components/SEO.jsx'
 
-// ══════ FESTIVAL DATA ══════
+// ══════ TAMIL MONTH START DATES 2026 (verified from tamildailycalendar.com) ══════
+const TAMIL_MONTH_STARTS = [
+  { month: 'மார்கழி', monthEn: 'Margazhi', start: new Date(2025, 11, 16) },   // Dec 16, 2025
+  { month: 'தை', monthEn: 'Thai', start: new Date(2026, 0, 15) },              // Jan 15
+  { month: 'மாசி', monthEn: 'Masi', start: new Date(2026, 1, 13) },            // Feb 13
+  { month: 'பங்குனி', monthEn: 'Panguni', start: new Date(2026, 2, 15) },      // Mar 15
+  { month: 'சித்திரை', monthEn: 'Chithirai', start: new Date(2026, 3, 14) },   // Apr 14
+  { month: 'வைகாசி', monthEn: 'Vaikasi', start: new Date(2026, 4, 15) },       // May 15
+  { month: 'ஆனி', monthEn: 'Aani', start: new Date(2026, 5, 15) },             // Jun 15
+  { month: 'ஆடி', monthEn: 'Aadi', start: new Date(2026, 6, 17) },             // Jul 17
+  { month: 'ஆவணி', monthEn: 'Aavani', start: new Date(2026, 7, 18) },          // Aug 18
+  { month: 'புரட்டாசி', monthEn: 'Purattasi', start: new Date(2026, 8, 18) },  // Sep 18
+  { month: 'ஐப்பசி', monthEn: 'Aippasi', start: new Date(2026, 9, 18) },       // Oct 18
+  { month: 'கார்த்திகை', monthEn: 'Karthigai', start: new Date(2026, 10, 17) },// Nov 17
+  { month: 'மார்கழி', monthEn: 'Margazhi', start: new Date(2026, 11, 16) },    // Dec 16
+]
+
+// Tamil year changes on Chithirai 1 (Apr 14)
+const TAMIL_YEAR_BEFORE_APR14 = { ta: 'விசுவாவசு', en: 'Visvavasu' }
+const TAMIL_YEAR_FROM_APR14 = { ta: 'ஸ்ரீ பிரபவ', en: 'Sri Prabhava' }
+
+// ══════ FESTIVAL DATA (updated & corrected) ══════
 const FESTIVALS_2026 = [
   { date:'2026-01-01', name_en:'New Year\'s Day', name_ta:'புத்தாண்டு நாள்', type:'national', tamilMonth:'மார்கழி' },
   { date:'2026-01-14', name_en:'Bhogi', name_ta:'போகி', type:'festival', tamilMonth:'மார்கழி' },
@@ -12,22 +33,24 @@ const FESTIVALS_2026 = [
   { date:'2026-01-26', name_en:'Republic Day', name_ta:'குடியரசு நாள்', type:'national', tamilMonth:'தை' },
   { date:'2026-02-01', name_en:'Thai Poosam', name_ta:'தை பூசம்', type:'festival', tamilMonth:'தை' },
   { date:'2026-02-19', name_en:'Maha Shivaratri', name_ta:'மகா சிவராத்திரி', type:'festival', tamilMonth:'மாசி' },
-  { date:'2026-03-19', name_en:'Telugu New Year', name_ta:'தெலுங்கு புத்தாண்டு', type:'holiday', tamilMonth:'பங்குனி' },
+  { date:'2026-03-19', name_en:'Telugu New Year (Ugadi)', name_ta:'தெலுங்கு புத்தாண்டு', type:'holiday', tamilMonth:'பங்குனி' },
   { date:'2026-03-21', name_en:'Ramzan (Eid ul-Fitr)', name_ta:'ரம்ஜான்', type:'festival', tamilMonth:'பங்குனி' },
   { date:'2026-03-28', name_en:'Panguni Uthiram', name_ta:'பங்குனி உத்திரம்', type:'festival', tamilMonth:'பங்குனி' },
+  { date:'2026-03-31', name_en:'Mahaveer Jayanthi', name_ta:'மகாவீர் ஜெயந்தி', type:'holiday', tamilMonth:'பங்குனி' },
   { date:'2026-04-03', name_en:'Good Friday', name_ta:'புனித வெள்ளி', type:'holiday', tamilMonth:'பங்குனி' },
+  { date:'2026-04-05', name_en:'Easter Sunday', name_ta:'ஈஸ்டர் ஞாயிறு', type:'holiday', tamilMonth:'பங்குனி' },
   { date:'2026-04-14', name_en:'Tamil New Year / Ambedkar Jayanti', name_ta:'தமிழ் புத்தாண்டு / அம்பேத்கர் ஜெயந்தி', type:'festival', tamilMonth:'சித்திரை' },
-  { date:'2026-04-23', name_en:'TN Assembly Election', name_ta:'தமிழ்நாடு சட்டமன்றத் தேர்தல்', type:'national', tamilMonth:'சித்திரை' },
-  { date:'2026-05-01', name_en:'May Day', name_ta:'மே தினம்', type:'national', tamilMonth:'சித்திரை' },
+  { date:'2026-04-21', name_en:'Chithirai Thiruvizha', name_ta:'சித்திரை திருவிழா', type:'festival', tamilMonth:'சித்திரை' },
+  { date:'2026-05-01', name_en:'May Day', name_ta:'தொழிலாளர் தினம்', type:'national', tamilMonth:'சித்திரை' },
   { date:'2026-05-28', name_en:'Bakrid (Eid ul-Adha)', name_ta:'பக்ரீத்', type:'festival', tamilMonth:'வைகாசி' },
   { date:'2026-05-30', name_en:'Vaikasi Visakam', name_ta:'வைகாசி விசாகம்', type:'festival', tamilMonth:'வைகாசி' },
   { date:'2026-06-26', name_en:'Muharram', name_ta:'முஹர்ரம்', type:'festival', tamilMonth:'ஆனி' },
   { date:'2026-07-18', name_en:'Aadi Perukku', name_ta:'ஆடிப் பெருக்கு', type:'festival', tamilMonth:'ஆடி' },
   { date:'2026-07-25', name_en:'Aadi Amavasai', name_ta:'ஆடி அமாவாசை', type:'festival', tamilMonth:'ஆடி' },
-  { date:'2026-08-15', name_en:'Independence Day', name_ta:'சுதந்திர நாள்', type:'national', tamilMonth:'ஆவணி' },
+  { date:'2026-08-15', name_en:'Independence Day', name_ta:'சுதந்திர நாள்', type:'national', tamilMonth:'ஆடி' },
   { date:'2026-08-26', name_en:'Milad-un-Nabi', name_ta:'மீலாது நபி', type:'festival', tamilMonth:'ஆவணி' },
   { date:'2026-09-04', name_en:'Krishna Jayanthi', name_ta:'கிருஷ்ண ஜெயந்தி', type:'festival', tamilMonth:'ஆவணி' },
-  { date:'2026-09-14', name_en:'Vinayagar Chaturthi', name_ta:'விநாயகர் சதுர்த்தி', type:'festival', tamilMonth:'புரட்டாசி' },
+  { date:'2026-09-14', name_en:'Vinayagar Chaturthi', name_ta:'விநாயகர் சதுர்த்தி', type:'festival', tamilMonth:'ஆவணி' },
   { date:'2026-10-02', name_en:'Gandhi Jayanti', name_ta:'காந்தி ஜெயந்தி', type:'national', tamilMonth:'புரட்டாசி' },
   { date:'2026-10-12', name_en:'Saraswathi Pooja', name_ta:'சரஸ்வதி பூஜை', type:'festival', tamilMonth:'புரட்டாசி' },
   { date:'2026-10-19', name_en:'Ayudha Pooja', name_ta:'ஆயுத பூஜை', type:'festival', tamilMonth:'ஐப்பசி' },
@@ -38,80 +61,159 @@ const FESTIVALS_2026 = [
 ]
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
-const TAMIL_MONTHS = ['தை','மாசி','பங்குனி','சித்திரை','வைகாசி','ஆனி','ஆடி','ஆவணி','புரட்டாசி','ஐப்பசி','கார்த்திகை','மார்கழி']
 const TAMIL_DAYS = ['ஞாயிறு','திங்கள்','செவ்வாய்','புதன்','வியாழன்','வெள்ளி','சனி']
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
 // ══════ PANCHANGAM CALCULATION HELPERS ══════
-// Rahu Kalam by day (Sun=0 to Sat=6) - standard timings for Coimbatore
+// Rahu Kalam by day (Sun=0 to Sat=6)
 const RAHU_KALAM = ['4:30-6:00 PM','7:30-9:00 AM','3:00-4:30 PM','12:00-1:30 PM','1:30-3:00 PM','10:30-12:00 PM','9:00-10:30 AM']
 const YAMA_GANDAM = ['12:00-1:30 PM','10:30-12:00 PM','9:00-10:30 AM','7:30-9:00 AM','6:00-7:30 AM','3:00-4:30 PM','1:30-3:00 PM']
 const KULIGAI = ['1:30-3:00 PM','6:00-7:30 AM','12:00-1:30 PM','10:30-12:00 PM','9:00-10:30 AM','7:30-9:00 AM','3:00-4:30 PM']
-const SOOLAM_DIR = ['West','East','North','South','South','West','East']
-const SOOLAM_REMEDY = ['Eat Jaggery','Eat Ghee','Eat Curd','Drink Milk','Eat Sesame Oil','Eat Sugar','Eat Salt']
 
-// Nalla Neram (Auspicious Time) by day of week - standard for Coimbatore/Annur region
-// Morning (காலை) and Evening (மாலை) slots
+// Soolam Direction and Remedy (corrected from tamildailycalendar.com)
+const SOOLAM_DIR = ['மேற்கு','கிழக்கு','வடக்கு','தெற்கு','தெற்கு','கிழக்கு','மேற்கு'] // West, East, North, South, South, East, West
+const SOOLAM_DIR_EN = ['West','East','North','South','South','East','West']
+const SOOLAM_REMEDY = ['மோர்','நெய்','பால்','நல்லெண்ணெய்','தயிர்','வெல்லம்','வெல்லம்'] // Buttermilk, Ghee, Milk, Sesame Oil, Curd, Jaggery, Jaggery
+const SOOLAM_REMEDY_EN = ['Buttermilk','Ghee','Milk','Sesame Oil','Curd','Jaggery','Jaggery']
+
+// Nalla Neram by day of week (corrected)
 const NALLA_NERAM = [
-  { am: '7:30-9:00 AM', pm: '4:30-6:00 PM' },   // Sunday
-  { am: '7:30-9:00 AM', pm: '2:00-3:30 PM' },   // Monday
-  { am: '7:30-9:00 AM', pm: '1:30-3:00 PM' },   // Tuesday
-  { am: '9:00-10:30 AM', pm: '1:30-3:00 PM' },  // Wednesday
-  { am: '9:00-10:30 AM', pm: '1:30-3:00 PM' },  // Thursday
-  { am: '10:30-12:00 PM', pm: '3:00-4:30 PM' }, // Friday
-  { am: '7:30-9:00 AM', pm: '3:00-4:30 PM' },   // Saturday
-]
-// Gowri Nalla Neram by day of week
-const GOWRI_NALLA_NERAM = [
-  { am: '9:00-10:30 AM', pm: '3:00-4:30 PM' },   // Sunday
-  { am: '10:30-12:00 PM', pm: '3:00-4:30 PM' },  // Monday
-  { am: '9:00-10:30 AM', pm: '12:00-1:30 PM' },  // Tuesday
-  { am: '7:30-9:00 AM', pm: '12:00-1:30 PM' },   // Wednesday
-  { am: '7:30-9:00 AM', pm: '12:00-1:30 PM' },   // Thursday
-  { am: '9:00-10:30 AM', pm: '1:30-3:00 PM' },   // Friday
-  { am: '6:00-7:30 AM', pm: '1:30-3:00 PM' },    // Saturday
+  { am: '7:30-8:30 AM', pm: '4:30-5:30 PM' },   // Sunday
+  { am: '6:30-7:30 AM', pm: '2:00-3:00 PM' },    // Monday
+  { am: '7:30-8:30 AM', pm: '4:30-5:30 PM' },    // Tuesday
+  { am: '9:30-10:30 AM', pm: '12:00-1:30 PM' },   // Wednesday
+  { am: '10:30-11:30 AM', pm: '9:00-10:30 AM' },  // Thursday
+  { am: '9:30-10:30 AM', pm: '12:30-1:30 PM' },   // Friday
+  { am: '7:45-8:45 AM', pm: '1:30-2:30 PM' },     // Saturday
 ]
 
-// Approximate Nakshatram cycle (27 stars, ~1 day each, rough estimate)
+// Gowri Nalla Neram by day of week (corrected)
+const GOWRI_NALLA_NERAM = [
+  { am: '3:00-4:30 PM', pm: '12:00-1:30 PM' },   // Sunday
+  { am: '4:30-6:00 PM', pm: '1:30-3:00 PM' },    // Monday
+  { am: '12:00-1:30 PM', pm: '9:00-10:30 AM' },   // Tuesday
+  { am: '10:30-12:00 PM', pm: '7:30-9:00 AM' },   // Wednesday
+  { am: '3:00-4:30 PM', pm: '10:30-12:00 PM' },   // Thursday
+  { am: '10:30-12:00 PM', pm: '7:30-9:00 AM' },   // Friday
+  { am: '6:00-7:30 AM', pm: '10:30-12:00 PM' },   // Saturday
+]
+
+// 27 Nakshatrams
 const NAKSHATRAMS = ['அஸ்வினி','பரணி','கார்த்திகை','ரோகிணி','மிருகசீரிடம்','திருவாதிரை','புனர்பூசம்','பூசம்','ஆயில்யம்','மகம்','பூரம்','உத்திரம்','அஸ்தம்','சித்திரை','சுவாதி','விசாகம்','அனுஷம்','கேட்டை','மூலம்','பூராடம்','உத்திராடம்','திருவோணம்','அவிட்டம்','சதயம்','பூரட்டாதி','உத்திரட்டாதி','ரேவதி']
 const NAKSHATRAMS_EN = ['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','Purva Phalguni','Uttara Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','Purva Ashadha','Uttara Ashadha','Shravana','Dhanishta','Shatabhisha','Purva Bhadrapada','Uttara Bhadrapada','Revati']
 
-// Thithi cycle (30 per lunar month)
-const THITHIS = ['பிரதமை','துவிதியை','திருதியை','சதுர்த்தி','பஞ்சமி','சஷ்டி','சப்தமி','அஷ்டமி','நவமி','தசமி','ஏகாதசி','துவாதசி','திரயோதசி','சதுர்தசி','அமாவாசை/பௌர்ணமி']
+// 30 Thithis (Shukla 1-15 + Krishna 1-15)
+const THITHIS = ['பிரதமை','துவிதியை','திருதியை','சதுர்த்தி','பஞ்சமி','சஷ்டி','சப்தமி','அஷ்டமி','நவமி','தசமி','ஏகாதசி','துவாதசி','திரயோதசி','சதுர்தசி','பௌர்ணமி','பிரதமை','துவிதியை','திருதியை','சதுர்த்தி','பஞ்சமி','சஷ்டி','சப்தமி','அஷ்டமி','நவமி','தசமி','ஏகாதசி','துவாதசி','திரயோதசி','சதுர்தசி','அமாவாசை']
+const PAKSHAM = ['சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','சுக்ல பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்','கிருஷ்ண பக்ஷம்']
 
-// Approximate calculation based on epoch
+// ══════ ACCURATE PANCHANGAM CALCULATIONS ══════
+// Reference epoch: Mar 31, 2026 (verified from tamildailycalendar.com live page)
+// Nakshatram: Pooram (#10), Thithi: Krishna Trayodasi (#27)
+const EPOCH = new Date(2026, 2, 31) // Mar 31, 2026
+const EPOCH_NAK = 10    // Pooram
+const EPOCH_THITHI = 27 // Krishna Trayodasi
+
+// Moon's mean sidereal period: ~27.3217 days → daily nakshatram advance: 27/27.3217 ≈ 0.9882
+const NAK_DAILY_RATE = 27 / 27.3217
+// Synodic month: ~29.5306 days → daily thithi advance: 30/29.5306 ≈ 1.0159
+const THITHI_DAILY_RATE = 30 / 29.5306
+
+function getTamilDate(date) {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+
+  for (let i = TAMIL_MONTH_STARTS.length - 1; i >= 0; i--) {
+    const ms = new Date(TAMIL_MONTH_STARTS[i].start)
+    ms.setHours(0, 0, 0, 0)
+    if (d >= ms) {
+      const dayNum = Math.floor((d - ms) / 86400000) + 1
+      return {
+        month: TAMIL_MONTH_STARTS[i].month,
+        monthEn: TAMIL_MONTH_STARTS[i].monthEn,
+        day: dayNum,
+      }
+    }
+  }
+  // Before Dec 16, 2025 - shouldn't happen for 2026
+  return { month: 'மார்கழி', monthEn: 'Margazhi', day: 1 }
+}
+
+function getTamilYear(date) {
+  const d = new Date(date)
+  const apr14 = new Date(2026, 3, 14)
+  return d >= apr14 ? TAMIL_YEAR_FROM_APR14 : TAMIL_YEAR_BEFORE_APR14
+}
+
+// Sunrise approximation for Annur (11.23°N, 77.02°E)
+function getSunrise(date) {
+  const d = new Date(date)
+  const dayOfYear = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000)
+  // Solar declination (approximate)
+  const declination = -23.44 * Math.cos((2 * Math.PI / 365) * (dayOfYear + 10))
+  const lat = 11.23 * Math.PI / 180
+  const decRad = declination * Math.PI / 180
+  // Hour angle at sunrise
+  const cosHA = -(Math.sin(lat) * Math.sin(decRad)) / (Math.cos(lat) * Math.cos(decRad))
+  const ha = Math.acos(Math.max(-1, Math.min(1, cosHA)))
+  // Solar noon for longitude 77.02°E (IST is UTC+5:30, reference 82.5°E)
+  const longitudeCorrection = (82.5 - 77.02) * 4 // minutes
+  const eqOfTime = 7.5 * Math.sin((2 * Math.PI / 365) * (dayOfYear - 81)) // rough equation of time
+  const solarNoon = 12 * 60 + longitudeCorrection - eqOfTime // in minutes IST
+  const sunriseMin = solarNoon - (ha * 180 / Math.PI) * 4
+  const sunsetMin = solarNoon + (ha * 180 / Math.PI) * 4
+  const formatTime = (mins) => {
+    const h = Math.floor(mins / 60)
+    const m = Math.round(mins % 60)
+    const period = h >= 12 ? 'PM' : 'AM'
+    const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h)
+    return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`
+  }
+  return { sunrise: formatTime(sunriseMin), sunset: formatTime(sunsetMin) }
+}
+
 function getDayPanchangam(date) {
   const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
   const dayOfWeek = d.getDay()
-  // Reference: Jan 1 2026 rough star index
-  const epoch = new Date('2026-01-01')
-  const diffDays = Math.floor((d - epoch) / 86400000)
-  const nakIndex = ((diffDays % 27) + 27) % 27
-  const thithiIndex = ((diffDays % 30) + 30) % 30
-  const tamilDate = ((d.getDate() + 16) % 30) + 1 // approximate tamil date
-  // Tamil month mapping (approximate)
-  const mIdx = d.getMonth()
-  const tamilMonthName = d.getDate() <= 14 ? TAMIL_MONTHS[mIdx === 0 ? 11 : mIdx - 1] : TAMIL_MONTHS[mIdx]
 
-  // Sunrise/Sunset for Annur (approx 11.23°N)
-  const sunrise = '06:' + String(10 + Math.floor(Math.sin(diffDays * 0.0172) * 8)).padStart(2, '0') + ' AM'
-  const sunset = '06:' + String(15 + Math.floor(Math.sin((diffDays + 180) * 0.0172) * 12)).padStart(2, '0') + ' PM'
+  // Days from epoch
+  const diffDays = Math.floor((d - EPOCH) / 86400000)
+
+  // Nakshatram (calibrated from Mar 31, 2026 = Pooram #10)
+  const nakRaw = (EPOCH_NAK + diffDays * NAK_DAILY_RATE) % 27
+  const nakIndex = ((Math.floor(nakRaw) % 27) + 27) % 27
+
+  // Thithi (calibrated from Mar 31, 2026 = Krishna Trayodasi #27)
+  const thithiRaw = (EPOCH_THITHI + diffDays * THITHI_DAILY_RATE) % 30
+  const thithiIndex = ((Math.floor(thithiRaw) % 30) + 30) % 30
+
+  // Tamil date
+  const tamilDate = getTamilDate(date)
+  const tamilYear = getTamilYear(date)
+
+  // Sunrise/Sunset
+  const { sunrise, sunset } = getSunrise(date)
 
   return {
     dayOfWeek,
     dayNameEn: DAY_NAMES[dayOfWeek],
     dayNameTa: TAMIL_DAYS[dayOfWeek],
-    tamilDate,
-    tamilMonth: tamilMonthName,
+    tamilDate: tamilDate.day,
+    tamilMonth: tamilDate.month,
+    tamilMonthEn: tamilDate.monthEn,
+    tamilYear: tamilYear.ta,
+    tamilYearEn: tamilYear.en,
     nakshatram: NAKSHATRAMS[nakIndex],
     nakshatramEn: NAKSHATRAMS_EN[nakIndex],
-    thithi: THITHIS[thithiIndex % 15],
-    paksha: thithiIndex < 15 ? 'சுக்ல பக்ஷம்' : 'கிருஷ்ண பக்ஷம்',
+    thithi: THITHIS[thithiIndex],
+    paksha: PAKSHAM[thithiIndex],
     rahuKalam: RAHU_KALAM[dayOfWeek],
     yamaGandam: YAMA_GANDAM[dayOfWeek],
     kuligai: KULIGAI[dayOfWeek],
     soolam: SOOLAM_DIR[dayOfWeek],
+    soolamEn: SOOLAM_DIR_EN[dayOfWeek],
     soolamRemedy: SOOLAM_REMEDY[dayOfWeek],
+    soolamRemedyEn: SOOLAM_REMEDY_EN[dayOfWeek],
     nallaNeram: NALLA_NERAM[dayOfWeek],
     gowriNallaNeram: GOWRI_NALLA_NERAM[dayOfWeek],
     sunrise,
@@ -133,7 +235,6 @@ export default function FestivalCalendar() {
 
   const monthFestivals = FESTIVALS_2026.filter(f => new Date(f.date).getMonth() === selectedMonth)
   const todayFestivals = FESTIVALS_2026.filter(f => f.date === selectedDay)
-  const nextFestival = FESTIVALS_2026.find(f => f.date >= today)
   const panchangam = getDayPanchangam(selectedDay)
   const selDate = new Date(selectedDay)
 
@@ -148,12 +249,12 @@ export default function FestivalCalendar() {
 
   return (
     <div className="min-h-screen page-enter" style={{ background: 'var(--c-surface)' }}>
-      <SEO title="Tamil Calendar 2026" description="Tamil daily calendar with panchangam, nakshatram, rahu kalam, nalla neram" keywords="Tamil calendar 2026, panchangam, nakshatram, rahu kalam, nalla neram, Annur" />
+      <SEO title="Tamil Calendar 2026" description="Tamil daily calendar with panchangam, nakshatram, rahu kalam, nalla neram for Annur" keywords="Tamil calendar 2026, panchangam, nakshatram, rahu kalam, nalla neram, Annur" />
       <PageHeader title="Tamil Calendar 2026" subtitle="தமிழ் நாள்காட்டி - Daily Panchangam, Festivals & Holidays" />
 
       <div className="max-w-5xl mx-auto px-4 -mt-6 relative z-10 pb-12">
 
-        {/* ═══ DAILY PANCHANGAM SHEET (like tamildailycalendar.com) ═══ */}
+        {/* ═══ DAILY PANCHANGAM SHEET ═══ */}
         <div className="bg-white rounded-3xl border border-gray-200/60 overflow-hidden mb-5 shadow-sm">
           {/* Header */}
           <div className="p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #991B1B, #DC2626)' }}>
@@ -170,12 +271,16 @@ export default function FestivalCalendar() {
                 <p className="text-white/80 text-sm mt-0.5">
                   {selDate.toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })}
                 </p>
+                <p className="text-white/60 text-xs mt-0.5">
+                  {panchangam.tamilYear} ({panchangam.tamilYearEn})
+                </p>
               </div>
               <div className="text-right">
                 <div className="text-5xl font-extrabold opacity-20" style={{ fontFamily: 'var(--font-display)' }}>{selDate.getDate()}</div>
                 <div className="bg-white/20 rounded-xl px-3 py-1 mt-1">
                   <p className="text-xs font-bold">{panchangam.tamilMonth} {panchangam.tamilDate}</p>
                 </div>
+                <p className="text-white/50 text-[10px] mt-1">{panchangam.tamilMonthEn} {panchangam.tamilDate}</p>
               </div>
             </div>
           </div>
@@ -218,12 +323,12 @@ export default function FestivalCalendar() {
           {/* Soolam & Remedy */}
           <div className="grid grid-cols-2 gap-0 border-t border-gray-100">
             <div className="p-4 border-r border-gray-100">
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--c-text-muted)' }}>Soolam / சூலம்</p>
-              <p className="text-sm font-extrabold mt-1" style={{ color: 'var(--c-text)' }}>🧭 {panchangam.soolam}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--c-text-muted)' }}>சூலம் / Soolam</p>
+              <p className="text-sm font-extrabold mt-1" style={{ color: 'var(--c-text)' }}>🧭 {panchangam.soolam} ({panchangam.soolamEn})</p>
             </div>
             <div className="p-4">
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--c-text-muted)' }}>Remedy / பரிகாரம்</p>
-              <p className="text-sm font-extrabold mt-1" style={{ color: 'var(--c-primary)' }}>🙏 {panchangam.soolamRemedy}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--c-text-muted)' }}>பரிகாரம் / Remedy</p>
+              <p className="text-sm font-extrabold mt-1" style={{ color: 'var(--c-primary)' }}>🙏 {panchangam.soolamRemedy} ({panchangam.soolamRemedyEn})</p>
             </div>
           </div>
 
@@ -233,7 +338,7 @@ export default function FestivalCalendar() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">🕐</span>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--c-text-muted)' }}>Nalla Neram / நல்ல நேரம்</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--c-text-muted)' }}>நல்ல நேரம் / Nalla Neram</p>
                   <p className="text-[9px]" style={{ color: '#C4C0B8' }}>Auspicious Time</p>
                 </div>
               </div>
@@ -252,7 +357,7 @@ export default function FestivalCalendar() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">✨</span>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--c-text-muted)' }}>Gowri Nalla Neram / கௌரி நல்ல நேரம்</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--c-text-muted)' }}>கௌரி நல்ல நேரம் / Gowri Nalla Neram</p>
                   <p className="text-[9px]" style={{ color: '#C4C0B8' }}>Gowri Auspicious Time</p>
                 </div>
               </div>
@@ -272,7 +377,7 @@ export default function FestivalCalendar() {
           {/* Today's Festivals */}
           {todayFestivals.length > 0 && (
             <div className="border-t border-gray-100 p-4">
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--c-text-muted)' }}>Festivals / திருவிழா</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--c-text-muted)' }}>திருவிழா / Festivals</p>
               <div className="flex flex-wrap gap-2">
                 {todayFestivals.map(f => {
                   const cfg = typeConfig[f.type] || typeConfig.festival
@@ -304,7 +409,11 @@ export default function FestivalCalendar() {
               <div className="text-center">
                 <h3 className="text-lg font-extrabold" style={{ color: 'var(--c-text)', fontFamily: 'var(--font-display)' }}>{MONTHS[selectedMonth]} 2026</h3>
                 <p className="text-xs font-bold" style={{ color: 'var(--c-primary-light)' }}>
-                  {TAMIL_MONTHS[selectedMonth === 0 ? 11 : selectedMonth - 1]} / {TAMIL_MONTHS[selectedMonth]}
+                  {(() => {
+                    const firstOfMonth = getTamilDate(new Date(2026, selectedMonth, 1))
+                    const lastOfMonth = getTamilDate(new Date(2026, selectedMonth + 1, 0))
+                    return firstOfMonth.month === lastOfMonth.month ? firstOfMonth.month : `${firstOfMonth.month} / ${lastOfMonth.month}`
+                  })()}
                 </p>
               </div>
               <button onClick={() => setSelectedMonth(m => Math.min(11, m + 1))} disabled={selectedMonth === 11}
@@ -329,18 +438,20 @@ export default function FestivalCalendar() {
                 const isSelected = selectedDay === dateStr
                 const isFestival = festivalDates.has(day)
                 const festival = monthFestivals.find(f => new Date(f.date).getDate() === day)
+                const tDate = getTamilDate(new Date(2026, selectedMonth, day))
                 return (
                   <div key={day}
                     onClick={() => { setSelectedDay(dateStr) }}
-                    className={`relative text-center py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer hover:ring-2 hover:ring-[#0C4A3E]/20
+                    className={`relative text-center py-1.5 rounded-xl transition-all cursor-pointer hover:ring-2 hover:ring-[#0C4A3E]/20
                     ${isSelected ? 'ring-2 ring-red-400' : ''}
                     ${isFestival && !isToday && !isSelected ? 'bg-orange-50' : ''}
                   `}
                     style={isSelected ? { background: 'linear-gradient(135deg, #991B1B, #DC2626)', color: 'white' } : isToday ? { background: 'linear-gradient(135deg, #0C4A3E, #14856A)', color: 'white' } : { color: 'var(--c-text)' }}
                   >
-                    {day}
+                    <span className="text-sm font-bold block">{day}</span>
+                    <span className="text-[8px] block" style={isSelected || isToday ? { color: 'rgba(255,255,255,0.7)' } : { color: 'var(--c-text-muted)' }}>{tDate.day}</span>
                     {isFestival && !isSelected && (
-                      <div className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${typeConfig[festival?.type]?.dot || 'bg-orange-500'}`} />
+                      <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${typeConfig[festival?.type]?.dot || 'bg-orange-500'}`} />
                     )}
                   </div>
                 )
@@ -355,6 +466,9 @@ export default function FestivalCalendar() {
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] font-bold" style={{ color: 'var(--c-text-muted)' }}>
                   <span className="w-2 h-2 rounded-full bg-blue-500" /> National
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] font-bold" style={{ color: 'var(--c-text-muted)' }}>
+                  <span className="text-[8px]">1</span> = Tamil Date
                 </div>
               </div>
               <button onClick={() => { setSelectedDay(today); setSelectedMonth(new Date().getMonth()) }}
@@ -416,7 +530,8 @@ export default function FestivalCalendar() {
         </div>
 
         <p className="text-[10px] text-center mt-6" style={{ color: '#C4C0B8' }}>
-          * Panchangam times are approximate for Annur (11.23°N, 77.02°E). For exact timings consult local pandit.
+          * Panchangam data for Annur (11.23°N, 77.02°E). Nakshatram & Thithi are approximate — for exact timings consult local pandit.
+          <br />Source reference: tamildailycalendar.com
         </p>
       </div>
     </div>

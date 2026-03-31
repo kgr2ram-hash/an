@@ -24,6 +24,7 @@ import reviewRoutes from '../server/routes/reviews.js';
 import adminUserRoutes from '../server/routes/adminUsers.js';
 import userAuthRoutes from '../server/routes/userAuth.js';
 import bloodDonorRoutes from '../server/routes/bloodDonors.js';
+import proxyRoutes from '../server/routes/proxy.js';
 import pool from '../server/db.js';
 
 dotenv.config();
@@ -62,6 +63,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/blood-donors', bloodDonorRoutes);
 app.use('/api/admin-users', adminUserRoutes);
 app.use('/api/user', userAuthRoutes);
+app.use('/api/proxy', proxyRoutes);
 
 // Stats endpoint
 const ALLOWED_STAT_TABLES = new Set(['bus_schedules', 'services', 'jobs', 'health_care', 'articles', 'officials', 'emergency_numbers', 'healthcare_facilities', 'service_submissions', 'events', 'complaints', 'contacts', 'gallery', 'blood_donors', 'reviews', 'categories']);

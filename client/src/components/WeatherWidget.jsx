@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import api from '../api.js'
 
 function getWmoInfo(wmo) {
   if (wmo === 0) return { icon: '☀️', desc: 'Clear Sky', ta: 'தெளிவான வானம்' }
@@ -19,20 +20,30 @@ export default function WeatherWidget() {
   const [weather, setWeather] = useState(null)
 
   useEffect(() => {
-    const cached = sessionStorage.getItem('annur_weather_v2')
-    if (cached) {
-      try { setWeather(JSON.parse(cached)); return } catch {}
+    function doFetch() {
+      const cached = sessionStorage.getItem('annur_weather_v3')
+      if (cached) {
+        try {
+          const c = JSON.parse(cached)
+          if (Date.now() - c._ts < 600000) { setWeather(c); return } // 10 min cache
+        } catch {}
+      }
+      // Try backend proxy first, then direct fetch as fallback
+      api.get('/proxy/weather')
+        .then(res => res.data)
+        .catch(() => fetch('https://api.open-meteo.com/v1/forecast?latitude=11.23&longitude=77.02&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&timezone=Asia/Kolkata').then(r => r.json()))
+        .then(data => {
+          if (data.current) {
+            const info = getWmoInfo(data.current.weather_code)
+            const w = { temp: Math.round(data.current.temperature_2m), ...info, humidity: data.current.relative_humidity_2m, wind: Math.round(data.current.wind_speed_10m), _ts: Date.now() }
+            setWeather(w)
+            sessionStorage.setItem('annur_weather_v3', JSON.stringify(w))
+          }
+        }).catch(() => {})
     }
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=11.23&longitude=77.02&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&timezone=Asia/Kolkata')
-      .then(r => r.json())
-      .then(data => {
-        if (data.current) {
-          const info = getWmoInfo(data.current.weather_code)
-          const w = { temp: Math.round(data.current.temperature_2m), ...info, humidity: data.current.relative_humidity_2m, wind: Math.round(data.current.wind_speed_10m) }
-          setWeather(w)
-          sessionStorage.setItem('annur_weather_v2', JSON.stringify(w))
-        }
-      }).catch(() => {})
+    doFetch()
+    const timer = setInterval(() => { sessionStorage.removeItem('annur_weather_v3'); doFetch() }, 600000) // refresh every 10 min
+    return () => clearInterval(timer)
   }, [])
 
   if (!weather) return null
@@ -52,7 +63,7 @@ export default function WeatherWidget() {
 }
 
 const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=11.23&longitude=77.02&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset&timezone=Asia/Kolkata&forecast_days=3'
-const REFRESH_MS = 30 * 60 * 1000
+const REFRESH_MS = 10 * 60 * 1000 // 10 minutes
 
 // Full weather card for homepage section
 export function WeatherCard() {
@@ -69,7 +80,9 @@ export function WeatherCard() {
         } catch {}
       }
       sessionStorage.removeItem('annur_weather_full')
-      fetch(WEATHER_URL).then(r => r.json()).then(d => {
+      // Try backend proxy first, fallback to direct
+      const fetchWeather = api.get('/proxy/weather').then(r => r.data).catch(() => fetch(WEATHER_URL).then(r => r.json()))
+      fetchWeather.then(d => {
         if (!d.current) return
         const curHour = new Date().getHours()
         const info = getWmoInfo(d.current.weather_code)

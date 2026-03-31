@@ -26,6 +26,7 @@ import reviewRoutes from './routes/reviews.js';
 import adminUserRoutes from './routes/adminUsers.js';
 import userAuthRoutes from './routes/userAuth.js';
 import bloodDonorRoutes from './routes/bloodDonors.js';
+import proxyRoutes from './routes/proxy.js';
 import { existsSync } from 'fs';
 import pool from './db.js';
 
@@ -81,6 +82,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/blood-donors', bloodDonorRoutes);
 app.use('/api/admin-users', adminUserRoutes);
 app.use('/api/user', userAuthRoutes);
+app.use('/api/proxy', proxyRoutes);
 
 // Stats endpoint for admin dashboard
 const ALLOWED_STAT_TABLES = new Set(['bus_schedules', 'services', 'jobs', 'health_care', 'articles', 'officials', 'emergency_numbers', 'healthcare_facilities', 'service_submissions', 'events', 'complaints', 'contacts', 'gallery', 'blood_donors', 'reviews', 'categories']);

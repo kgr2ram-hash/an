@@ -191,7 +191,7 @@ export default function GoldSilverPrice() {
           <span className="text-[10px] font-bold" style={{ color: 'var(--c-text-muted)' }}>
             Source: {prices.source === 'metals.live' ? 'Live market data' : 'Estimated rates'} • Updated: {new Date(prices.ts).toLocaleTimeString()}
           </span>
-          <button onClick={() => { sessionStorage.removeItem('gold_silver_v4'); sessionStorage.removeItem('gold_silver_prices'); sessionStorage.removeItem('gold_silver_v3'); window.location.reload() }}
+          <button onClick={() => { sessionStorage.removeItem('gold_silver_v5'); sessionStorage.removeItem('gold_silver_v4'); sessionStorage.removeItem('gold_silver_prices'); window.location.reload() }}
             className="text-[10px] font-bold px-2 py-1 rounded-lg" style={{ color: 'var(--c-primary)', background: 'rgba(12,74,62,0.06)' }}>
             🔄 Refresh
           </button>

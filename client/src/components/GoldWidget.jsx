@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchGoldSilverPrices } from '../utils/goldPrice.js'
 
-const REFRESH_MS = 30 * 60 * 1000 // 30 minutes
+const REFRESH_MS = 5 * 60 * 1000 // 5 minutes
 
 export default function GoldWidget() {
   const [prices, setPrices] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
 
   function refresh() {
-    sessionStorage.removeItem('gold_silver_v4') // force fresh fetch
+    sessionStorage.removeItem('gold_silver_v5') // force fresh fetch
     fetchGoldSilverPrices().then(p => {
       setPrices(p)
       setLastUpdate(new Date())

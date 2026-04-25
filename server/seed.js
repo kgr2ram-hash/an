@@ -6,18 +6,22 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 async function seed() {
-  // Ensure the database exists before the pool (which requires it) makes any query
-  const initConn = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    port: parseInt(process.env.DB_PORT) || 3306,
-  });
-  try {
-    await initConn.query('CREATE DATABASE IF NOT EXISTS `supervillage`');
-    console.log('[seed] Database ready.');
-  } finally {
-    await initConn.end();
+  // Ensure the database exists (skip for cloud DATABASE_URL — provider creates it)
+  if (!process.env.DATABASE_URL) {
+    const initConn = await mysql.createConnection({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      port: parseInt(process.env.DB_PORT) || 3306,
+    });
+    try {
+      await initConn.query('CREATE DATABASE IF NOT EXISTS `supervillage`');
+      console.log('[seed] Database ready.');
+    } finally {
+      await initConn.end();
+    }
+  } else {
+    console.log('[seed] Using DATABASE_URL — database assumed to exist.');
   }
 
   try {

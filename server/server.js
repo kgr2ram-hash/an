@@ -131,7 +131,7 @@ async function expireOldJobs() {
   try {
     const [result] = await pool.query("UPDATE jobs SET is_active = 0 WHERE deadline IS NOT NULL AND deadline < CURDATE() AND is_active = 1");
     if (result.affectedRows > 0) console.log(`[auto-expire] Deactivated ${result.affectedRows} expired jobs`);
-  } catch (err) { console.error('[auto-expire] error:', err.message); }
+  } catch (err) { console.error('[auto-expire] error:', err.code || '', err.message); }
 }
 expireOldJobs();
 setInterval(expireOldJobs, 6 * 60 * 60 * 1000);

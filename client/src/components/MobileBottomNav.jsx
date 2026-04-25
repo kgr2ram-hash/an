@@ -18,6 +18,7 @@ const mainNav = [
 ]
 
 const moreLinks = [
+  { path: '/sports', icon: '🏆', label: 'Sports' },
   { path: '/events', icon: '📅', label: 'Events' },
   { path: '/officials', icon: '👤', label: 'Officials' },
   { path: '/learn', icon: '📰', label: 'News' },

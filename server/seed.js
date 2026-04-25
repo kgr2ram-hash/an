@@ -1,14 +1,26 @@
 import bcrypt from 'bcrypt';
+import mysql from 'mysql2/promise';
 import pool from './db.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 async function seed() {
+  // Ensure the database exists before the pool (which requires it) makes any query
+  const initConn = await mysql.createConnection({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    port: parseInt(process.env.DB_PORT) || 3306,
+  });
   try {
-    // Create tables
-    await pool.query(`CREATE DATABASE IF NOT EXISTS supervillage`);
-    await pool.query(`USE supervillage`);
+    await initConn.query('CREATE DATABASE IF NOT EXISTS `supervillage`');
+    console.log('[seed] Database ready.');
+  } finally {
+    await initConn.end();
+  }
+
+  try {
 
     await pool.query(`CREATE TABLE IF NOT EXISTS admins (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -124,7 +136,6 @@ async function seed() {
       "ALTER TABLE health_care ADD COLUMN maps_url VARCHAR(500) DEFAULT '' AFTER type",
       "ALTER TABLE services ADD COLUMN image_url VARCHAR(500) DEFAULT '' AFTER maps_url",
       "CREATE INDEX idx_services_category ON services (category)",
-      "CREATE INDEX idx_service_submissions_category ON service_submissions (category)",
     ];
     for (const q of alterQueries) {
       try { await pool.query(q); } catch (e) {
@@ -182,6 +193,61 @@ async function seed() {
       submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       reviewed_at TIMESTAMP NULL
     )`);
+    try { await pool.query(`CREATE INDEX idx_service_submissions_category ON service_submissions (category)`); } catch (e) { if (e.errno !== 1061) throw e; }
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS events (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title_en VARCHAR(200) NOT NULL,
+      title_ta VARCHAR(200) NOT NULL DEFAULT '',
+      description_en TEXT,
+      description_ta TEXT,
+      event_date DATE NOT NULL,
+      event_time VARCHAR(50) DEFAULT '',
+      location_en VARCHAR(255) DEFAULT '',
+      location_ta VARCHAR(255) DEFAULT '',
+      category ENUM('festival','meeting','election','sports','cultural','other') DEFAULT 'other',
+      is_active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Seed events (Annur, Coimbatore — 2026)
+    const [[{ evtCount }]] = await pool.query('SELECT COUNT(*) as evtCount FROM events');
+    if (evtCount === 0) {
+      const events = [
+        // Past events (for history/testing)
+        ['Tamil New Year Celebration', 'தமிழ் புத்தாண்டு கொண்டாட்டம்', 'Grand celebration of Tamil New Year with cultural programs, kolam competition and community feast at Annur Town Panchayat grounds.', 'அன்னூர் நகராட்சி மைதானத்தில் கோலம் போட்டி, கலை நிகழ்ச்சிகள் மற்றும் சமூக விருந்துடன் தமிழ் புத்தாண்டு கொண்டாட்டம்.', '2026-04-14', '06:00 AM', 'Annur Town Panchayat Grounds', 'அன்னூர் நகராட்சி மைதானம்', 'festival'],
+        ['Chithirai Thiruvizha', 'சித்திரை திருவிழா', 'Traditional Chithirai festival at Annur Mariamman Temple with special poojas, procession and devotional music.', 'அன்னூர் மாரியம்மன் கோவிலில் சிறப்பு பூஜைகள், ஊர்வலம் மற்றும் பக்தி இசையுடன் சித்திரை திருவிழா.', '2026-04-21', '08:00 AM', 'Annur Mariamman Temple', 'அன்னூர் மாரியம்மன் கோவில்', 'festival'],
+
+        // Upcoming events
+        ['May Day Workers Celebration', 'தொழிலாளர் தின கொண்டாட்டம்', 'Annur town celebrates International Workers Day with a rally, speeches by trade union leaders and cultural programs for the working community.', 'அன்னூரில் தொழிலாளர்கள் தினத்தை முன்னிட்டு பேரணி, தொழிற்சங்க தலைவர்கள் உரை மற்றும் கலை நிகழ்ச்சிகள்.', '2026-05-01', '08:00 AM', 'Annur Bus Stand Grounds', 'அன்னூர் பேருந்து நிலைய மைதானம்', 'cultural'],
+        ['Annur Town Panchayat Monthly Meeting', 'அன்னூர் நகராட்சி மாத கூட்டம்', 'Monthly council meeting to discuss town development projects, road repairs, water supply issues and public grievances. All residents may attend.', 'நகர மேம்பாட்டு திட்டங்கள், சாலை பழுதுபார்ப்பு, குடிநீர் பிரச்சினைகள் மற்றும் பொது புகார்களை விவாதிக்க மாத சபை கூட்டம்.', '2026-05-10', '10:00 AM', 'Annur Town Panchayat Office', 'அன்னூர் நகராட்சி அலுவலகம்', 'meeting'],
+        ['Free Medical Health Camp', 'இலவச மருத்துவ முகாம்', 'Free health checkup camp organized by Sanjeevani Hospital covering general medicine, blood pressure, diabetes screening and free medicines for BPL families.', 'சஞ்சீவினி மருத்துவமனை ஏற்பாட்டில் இலவச உடல் நல முகாம். பொது மருத்துவம், ரத்த அழுத்தம், நீரிழிவு பரிசோதனை மற்றும் BPL குடும்பங்களுக்கு இலவச மருந்துகள்.', '2026-05-15', '09:00 AM', 'Annur Government Primary Health Centre', 'அன்னூர் அரசு ஆரம்ப சுகாதார நிலையம்', 'other'],
+        ['Bakrid (Eid ul-Adha) Namaz & Celebration', 'பக்ரீத் தொழுகை மற்றும் கொண்டாட்டம்', 'Eid ul-Adha prayers at Annur Jumma Masjid followed by community feast and celebrations. All community members are welcome.', 'அன்னூர் ஜும்மா மசூதியில் ஈத் தொழுகை மற்றும் சமூக விருந்துடன் கொண்டாட்டம். அனைத்து சமூகத்தினரும் வரவேற்கப்படுகிறார்கள்.', '2026-05-28', '06:30 AM', 'Annur Jumma Masjid', 'அன்னூர் ஜும்மா மசூதி', 'festival'],
+        ['Vaikasi Visakam Temple Festival', 'வைகாசி விசாகம் கோவில் திருவிழா', 'Special poojas and chariot procession at Annur Murugan Temple for Vaikasi Visakam — the birth star of Lord Murugan. Devotional music and prasadam distribution.', 'அன்னூர் முருகன் கோவிலில் வைகாசி விசாகம் சிறப்பு பூஜைகள் மற்றும் தேர் ஊர்வலம். பக்தி இசை மற்றும் பிரசாத விநியோகம்.', '2026-05-30', '05:00 AM', 'Annur Murugan Temple', 'அன்னூர் முருகன் கோவில்', 'festival'],
+        ['Blood Donation Camp', 'ரத்த தான முகாம்', 'Voluntary blood donation camp organized by Annur Youth Club in association with Coimbatore Government Medical College. Donors receive health certificates.', 'அன்னூர் யூத் கிளப் மற்றும் கோயம்புத்தூர் அரசு மருத்துவக் கல்லூரி இணைந்து நடத்தும் தன்னார்வ ரத்ததான முகாம். தானமளிப்பவர்களுக்கு சுகாதார சான்றிதழ்.', '2026-06-07', '09:00 AM', 'Annur Town Panchayat Community Hall', 'அன்னூர் நகராட்சி கமியூனிட்டி ஹால்', 'other'],
+        ['Inter-School Cricket Tournament', 'பள்ளிகளுக்கிடையேயான கிரிக்கெட் போட்டி', 'Annual cricket tournament between 8 schools from Annur, Mettupalayam and Karamadai blocks. Under-17 category. Winners get trophies and cash prizes.', '8 பள்ளிகள் கலந்துகொள்ளும் வருடாந்திர கிரிக்கெட் போட்டி. 17 வயதுக்கு உட்பட்ட வகை. வெற்றியாளர்களுக்கு கோப்பைகள் மற்றும் பரிசுகள்.', '2026-06-14', '08:00 AM', 'Annur Government Higher Secondary School Ground', 'அன்னூர் அரசு மேல்நிலைப் பள்ளி மைதானம்', 'sports'],
+        ['Muharram Procession', 'முஹர்ரம் ஊர்வலம்', 'Muharram procession through the main streets of Annur with traditional rituals. Road diversions in effect near Main Road and Kovai Road junction.', 'அன்னூர் பிரதான தெருக்களில் பாரம்பரிய சடங்குகளுடன் முஹர்ரம் ஊர்வலம். பிரதான சாலை மற்றும் கோவை சாலை சந்திப்பில் போக்குவரத்து திசை மாற்றம்.', '2026-06-26', '08:00 AM', 'Annur Main Road', 'அன்னூர் பிரதான சாலை', 'festival'],
+        ['Aadi Perukku Water Festival', 'ஆடிப் பெருக்கு நீர் விழா', 'Traditional Aadi Perukku celebration at Annur pond with women performing rituals, offering food to the water body and traditional folk songs. Prasadam served.', 'அன்னூர் குளத்தில் பாரம்பரிய ஆடிப் பெருக்கு கொண்டாட்டம். பெண்கள் சடங்குகள், நீர்நிலைக்கு அன்னதானம் மற்றும் நாட்டுப்புற பாடல்கள்.', '2026-07-18', '07:00 AM', 'Annur Town Pond (Oorani)', 'அன்னூர் நகர குளம் (ஊரணி)', 'festival'],
+        ['Annur Open Kabaddi Tournament', 'அன்னூர் திறந்த கபடி போட்டி', 'Open kabaddi tournament for men and women teams across Annur block. Cash prizes for winners. Register at Annur Town Panchayat Office. Entry free.', 'அன்னூர் வட்டம் முழுவதும் ஆண்கள் மற்றும் பெண்கள் அணிகளுக்கான திறந்த கபடி போட்டி. பங்கேற்பு இலவசம்.', '2026-07-25', '08:00 AM', 'Annur Bus Stand Grounds', 'அன்னூர் பேருந்து நிலைய மைதானம்', 'sports'],
+        ['Independence Day Celebration', 'சுதந்திர தின கொண்டாட்டம்', 'Flag hoisting ceremony by Tahsildar, followed by march-past by school students, NCC cadets and cultural performances. Prizes for essay and drawing competitions.', 'தாசில்தார் கொடியேற்றம், பள்ளி மாணவர்கள், NCC மாணவர்கள் அணிவகுப்பு மற்றும் கலை நிகழ்ச்சிகள். கட்டுரை மற்றும் ஓவியப் போட்டி பரிசு வழங்கல்.', '2026-08-15', '08:00 AM', 'Annur Taluk Office Grounds', 'அன்னூர் தாலுகா அலுவலக மைதானம்', 'cultural'],
+        ['Free Eye & Dental Camp', 'இலவச கண் மற்றும் பல் மருத்துவ முகாம்', 'Free eye checkup and dental care camp. Spectacles provided free for eligible patients. Organized by Lions Club Annur with NM Hospital.', 'இலவச கண் பரிசோதனை மற்றும் பல் சிகிச்சை முகாம். தகுதியான நோயாளிகளுக்கு இலவச கண்ணாடிகள். லயன்ஸ் கிளப் அன்னூர் மற்றும் NM மருத்துவமனை ஏற்பாடு.', '2026-08-22', '09:00 AM', 'Annur Government Hospital', 'அன்னூர் அரசு மருத்துவமனை', 'other'],
+        ['Krishna Jayanthi Celebration', 'கிருஷ்ண ஜெயந்தி கொண்டாட்டம்', 'Gokulashtami celebrations with Uriyadi (pot-breaking) competition, fancy dress for children and special poojas at Annur Krishna Temple. Prasadam distribution.', 'கோகுலாஷ்டமி கொண்டாட்டம் — உரியடி போட்டி, குழந்தைகளுக்கு அலங்கார போட்டி மற்றும் அன்னூர் கிருஷ்ண கோவிலில் சிறப்பு பூஜைகள்.', '2026-09-04', '10:00 AM', 'Annur Krishna Temple & Market Square', 'அன்னூர் கிருஷ்ண கோவில் மற்றும் சந்தை சதுக்கம்', 'festival'],
+        ['Vinayagar Chaturthi Festival', 'விநாயகர் சதுர்த்தி திருவிழா', 'Grand Vinayagar Chaturthi with clay idol installation at Annur Market, special abishegam, cultural programs across 10 days and procession on the final day.', 'அன்னூர் சந்தையில் மண் விநாயகர் நிறுவல், சிறப்பு அபிஷேகம், 10 நாள் கலை நிகழ்ச்சிகள் மற்றும் கடைசி நாள் ஊர்வலம்.', '2026-09-14', '06:00 AM', 'Annur Market & Streets', 'அன்னூர் சந்தை மற்றும் தெருக்கள்', 'festival'],
+        ['Gandhi Jayanti - Cleanliness Drive', 'காந்தி ஜெயந்தி - தூய்மை இயக்கம்', 'Cleanliness drive across Annur town on Gandhi Jayanti. Volunteers gather at Town Panchayat Office at 7 AM. Join and keep Annur clean.', 'காந்தி ஜெயந்தி சுத்தமா இயக்கம். காலை 7 மணிக்கு நகராட்சி அலுவலகத்தில் தன்னார்வலர்கள் கூடவும். அன்னூரை சுத்தமாக வைப்போம்.', '2026-10-02', '07:00 AM', 'Annur Town — All Streets', 'அன்னூர் நகரம் — அனைத்து தெருக்கள்', 'other'],
+        ['Saraswathi Pooja & Ayudha Pooja', 'சரஸ்வதி பூஜை & ஆயுத பூஜை', 'Schools and workshops observe Saraswathi Pooja. Government offices, vehicles and tools are decorated for Ayudha Pooja. Public holiday — businesses closed.', 'பள்ளிகள் சரஸ்வதி பூஜை கொண்டாடுகின்றன. அரசு அலுவலகங்கள், வாகனங்கள் மற்றும் கருவிகள் அலங்கரிக்கப்படுகின்றன.', '2026-10-19', '09:00 AM', 'Schools & Workplaces, Annur', 'பள்ளிகள் மற்றும் பணியிடங்கள், அன்னூர்', 'festival'],
+        ['Deepavali Festival Celebration', 'தீபாவளி திருவிழா கொண்டாட்டம்', 'Annur town lights up for Deepavali! Community fireworks display at the bus stand grounds at 6 PM. Sweetmeat distribution for children by Town Panchayat. Shops and streets decorated with lights.', 'அன்னூர் நகரம் தீபாவளியில் ஒளி வீசுகிறது! மாலை 6 மணிக்கு பேருந்து நிலைய மைதானத்தில் பட்டாசு காட்சி. குழந்தைகளுக்கு இனிப்பு விநியோகம்.', '2026-11-08', '06:00 AM', 'Annur Town', 'அன்னூர் நகரம்', 'festival'],
+        ['Karthigai Deepam Celebration', 'கார்த்திகை தீப கொண்டாட்டம்', 'Traditional Karthigai Deepam — earthen lamps lit in every home and temple across Annur. Special abishegam at Shiva temples. Collective lamp lighting at Town Square at 7 PM.', 'பாரம்பரிய கார்த்திகை தீபம் — அன்னூர் முழுவதும் வீடுகள் மற்றும் கோவில்களில் மண்விளக்குகள். சிவன் கோவில்களில் சிறப்பு அபிஷேகம்.', '2026-11-16', '06:30 AM', 'Annur Shiva Temple & Town Square', 'அன்னூர் சிவன் கோவில் மற்றும் நகர சதுக்கம்', 'festival'],
+        ['Annual School Sports Day', 'வருடாந்திர பள்ளி விளையாட்டு நாள்', 'Annual sports day of Annur Government Higher Secondary School. Track events, field events and March-past. Parents and public are invited.', 'அன்னூர் அரசு மேல்நிலைப் பள்ளி வருடாந்திர விளையாட்டு நாள். ஓட்டம், மைதான நிகழ்வுகள் மற்றும் அணிவகுப்பு. பெற்றோர் மற்றும் பொதுமக்கள் வரவேற்கப்படுகிறார்கள்.', '2026-11-28', '09:00 AM', 'Annur Government Higher Secondary School', 'அன்னூர் அரசு மேல்நிலைப் பள்ளி', 'sports'],
+        ['Christmas Celebration', 'கிறிஸ்துமஸ் கொண்டாட்டம்', 'Christmas celebrations at Annur Church with carol singing, nativity play and community feast. Open to all community members.', 'அன்னூர் தேவாலயத்தில் கிறிஸ்துமஸ் கொண்டாட்டம் — கரோல் பாட்டு, நடிப்பு நிகழ்ச்சி மற்றும் சமூக விருந்து. அனைத்து சமூகத்தினரும் வரவேற்கப்படுகிறார்கள்.', '2026-12-25', '08:00 AM', 'Annur Church & Community Hall', 'அன்னூர் தேவாலயம் மற்றும் கமியூனிட்டி ஹால்', 'cultural'],
+      ];
+      for (const ev of events) {
+        await pool.query(
+          `INSERT INTO events (title_en, title_ta, description_en, description_ta, event_date, event_time, location_en, location_ta, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ev
+        );
+      }
+      console.log(`Seeded ${events.length} events.`);
+    }
 
     // Seed admin
     const hash = await bcrypt.hash('admin123', 10);
@@ -271,14 +337,22 @@ async function seed() {
       );
     }
 
+    // Update expired job deadlines
+    await pool.query(`UPDATE jobs SET deadline = '2026-05-31' WHERE title_en = 'Textile Mill Operator'`);
+    await pool.query(`UPDATE jobs SET deadline = '2026-06-30' WHERE title_en = 'Software Developer'`);
+    await pool.query(`UPDATE jobs SET deadline = '2026-06-15' WHERE title_en = 'Data Entry Operator'`);
+    await pool.query(`UPDATE jobs SET deadline = '2026-05-31' WHERE title_en = 'Garment Checker'`);
+    await pool.query(`UPDATE jobs SET deadline = '2026-06-20' WHERE title_en = 'Customer Support'`);
+    await pool.query(`UPDATE jobs SET deadline = '2026-07-01' WHERE title_en = 'ITI Mechanic Apprentice'`);
+
     // Seed jobs (Coimbatore region)
     const jobs = [
-      ['Textile Mill Operator', 'ஜவுளி ஆலை ஆபரேட்டர்', 'Annur Cotton Mills', 'Cotton ginning and spinning machine operator. Shift-based work.', 'பருத்தி ஜின்னிங் மற்றும் நூற்பு இயந்திர ஆபரேட்டர்', '2026-04-15', 'hr@annurmills.com', '', '', '1-3 years'],
-      ['Software Developer', 'மென்பொருள் டெவலப்பர்', 'Zoho Corporation, Coimbatore', 'Full-stack developer with React and Node.js. Coimbatore office.', 'React மற்றும் Node.js அனுபவம் கொண்ட டெவலப்பர். கோயம்புத்தூர் அலுவலகம்.', '2026-04-01', 'careers@zoho.com', 'https://www.zoho.com/careers', 'https://www.zoho.com', '2-5 years'],
-      ['Data Entry Operator', 'தரவு உள்ளீட்டு ஆபரேட்டர்', 'Coimbatore District Collector Office', 'Government data entry position. Typing speed 35 WPM required.', 'அரசு தரவு உள்ளீட்டு பதவி. 35 WPM தட்டச்சு வேகம் தேவை.', '2026-03-30', 'collector@coimbatore.tn.gov.in', '', '', 'Freshers'],
-      ['Garment Checker', 'ஆடை சோதனையாளர்', 'Tiruppur Garments Pvt Ltd', 'Quality checking of garments. Transport provided from Annur.', 'ஆடைகளின் தர சோதனை. அன்னூரிலிருந்து போக்குவரத்து வசதி.', '2026-04-10', '9876543250', '', '', 'Freshers'],
-      ['Customer Support', 'வாடிக்கையாளர் ஆதரவு', 'Freshworks, Coimbatore', 'Handle customer queries via chat and email. Coimbatore location.', 'சாட் மற்றும் மின்னஞ்சல் மூலம் வாடிக்கையாளர் கேள்விகள். கோயம்புத்தூர்.', '2026-04-20', 'jobs@freshworks.com', 'https://www.freshworks.com/company/careers', 'https://www.freshworks.com', '0-2 years'],
-      ['ITI Mechanic Apprentice', 'ஐ.டி.ஐ மெக்கானிக் பயிற்சியாளர்', 'Annur Private ITI', 'Apprenticeship in Motor Vehicle Mechanic trade. NCVT certified.', 'மோட்டார் வாகன மெக்கானிக் தொழிலில் பயிற்சி. NCVT சான்றிதழ்.', '2026-05-01', '', '', '', 'Freshers / 10th Pass'],
+      ['Textile Mill Operator', 'ஜவுளி ஆலை ஆபரேட்டர்', 'Annur Cotton Mills', 'Cotton ginning and spinning machine operator. Shift-based work.', 'பருத்தி ஜின்னிங் மற்றும் நூற்பு இயந்திர ஆபரேட்டர்', '2026-05-31', 'hr@annurmills.com', '', '', '1-3 years'],
+      ['Software Developer', 'மென்பொருள் டெவலப்பர்', 'Zoho Corporation, Coimbatore', 'Full-stack developer with React and Node.js. Coimbatore office.', 'React மற்றும் Node.js அனுபவம் கொண்ட டெவலப்பர். கோயம்புத்தூர் அலுவலகம்.', '2026-06-30', 'careers@zoho.com', 'https://www.zoho.com/careers', 'https://www.zoho.com', '2-5 years'],
+      ['Data Entry Operator', 'தரவு உள்ளீட்டு ஆபரேட்டர்', 'Coimbatore District Collector Office', 'Government data entry position. Typing speed 35 WPM required.', 'அரசு தரவு உள்ளீட்டு பதவி. 35 WPM தட்டச்சு வேகம் தேவை.', '2026-06-15', 'collector@coimbatore.tn.gov.in', '', '', 'Freshers'],
+      ['Garment Checker', 'ஆடை சோதனையாளர்', 'Tiruppur Garments Pvt Ltd', 'Quality checking of garments. Transport provided from Annur.', 'ஆடைகளின் தர சோதனை. அன்னூரிலிருந்து போக்குவரத்து வசதி.', '2026-05-31', '9876543250', '', '', 'Freshers'],
+      ['Customer Support', 'வாடிக்கையாளர் ஆதரவு', 'Freshworks, Coimbatore', 'Handle customer queries via chat and email. Coimbatore location.', 'சாட் மற்றும் மின்னஞ்சல் மூலம் வாடிக்கையாளர் கேள்விகள். கோயம்புத்தூர்.', '2026-06-20', 'jobs@freshworks.com', 'https://www.freshworks.com/company/careers', 'https://www.freshworks.com', '0-2 years'],
+      ['ITI Mechanic Apprentice', 'ஐ.டி.ஐ மெக்கானிக் பயிற்சியாளர்', 'Annur Private ITI', 'Apprenticeship in Motor Vehicle Mechanic trade. NCVT certified.', 'மோட்டார் வாகன மெக்கானிக் தொழிலில் பயிற்சி. NCVT சான்றிதழ்.', '2026-07-01', '', '', '', 'Freshers / 10th Pass'],
     ];
     for (const j of jobs) {
       await pool.query(

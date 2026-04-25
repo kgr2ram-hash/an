@@ -116,7 +116,7 @@ export default function Home() {
   // Populate gold price in hero + auto-refresh every 30 min
   useEffect(() => {
     function updateHeroGold() {
-      sessionStorage.removeItem('gold_silver_v4')
+      sessionStorage.removeItem('gold_silver_v6')
       import('../utils/goldPrice.js').then(({ fetchGoldSilverPrices }) => {
         fetchGoldSilverPrices().then(p => {
           const gEl = document.getElementById('hero-gold-price')
@@ -237,11 +237,11 @@ export default function Home() {
                     { path: '/water-tax-calculator', icon: '💧', label: 'Water' },
                     { path: '/bus-tracking', icon: '📍', label: 'Track' },
                     { path: '/festival-calendar', icon: '📅', label: 'Calendar' },
-                  ].map(t => (
-                    <a key={t.path} href={t.path} className="flex flex-col items-center gap-1 py-1.5 rounded-xl hover:bg-white/10 transition-colors">
-                      <span className="text-base">{t.icon}</span>
-                      <span className="text-white/60 text-[8px] font-bold">{t.label}</span>
-                    </a>
+                  ].map(q => (
+                    <Link key={q.path} to={q.path} className="flex flex-col items-center gap-1 py-1.5 rounded-xl hover:bg-white/10 transition-colors">
+                      <span className="text-base">{q.icon}</span>
+                      <span className="text-white/60 text-[8px] font-bold">{q.label}</span>
+                    </Link>
                   ))}
                 </div>
               </div>

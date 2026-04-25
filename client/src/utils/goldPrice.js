@@ -1,70 +1,72 @@
-// Fetch live gold/silver prices via backend proxy (avoids CORS issues)
 import api from '../api.js'
 
-// Fallback rates (updated periodically)
+const CACHE_KEY = 'gold_silver_v6'
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+// Fallback static rates (Coimbatore market estimates)
 const FALLBACK = {
   gold: {
-    usd_oz: 3050,
-    inr_gram_24k: 14837,
-    inr_gram_22k: 13600,
-    inr_gram_18k: 11128,
-    inr_8g: 108800,
-    inr_10g_24k: 148370,
-    inr_10g_22k: 136000,
+    usd_oz: 3320,
+    usd_chg: null,
+    inr_gram_24k: 10940,
+    inr_gram_22k: 10028,
+    inr_gram_18k: 8205,
+    inr_8g: 80224,
+    inr_10g_24k: 109400,
+    inr_10g_22k: 100280,
   },
   silver: {
-    usd_oz: 34,
-    inr_gram: 235,
-    inr_100g: 23500,
-    inr_kg: 235000,
+    usd_oz: 33,
+    usd_chg: null,
+    inr_gram: 113,
+    inr_100g: 11300,
+    inr_kg: 113000,
   },
-  usd_inr: 85.5,
-  source: 'estimated (Coimbatore rates)',
+  usd_inr: 84.0,
+  source: 'Estimated',
   _ts: Date.now(),
 }
 
 export async function fetchGoldSilverPrices() {
-  const cached = sessionStorage.getItem('gold_silver_v5')
+  // Check cache
+  const cached = sessionStorage.getItem(CACHE_KEY)
   if (cached) {
     try {
       const c = JSON.parse(cached)
-      if (Date.now() - c._ts < 300000) return c // 5 min cache
+      if (Date.now() - c._ts < CACHE_TTL) return c
     } catch {}
   }
 
   let prices = null
 
+  // Try backend proxy (handles multi-source fetch server-side)
   try {
-    // Fetch from our backend proxy (handles external API calls server-side)
     const res = await api.get('/proxy/gold-silver')
-    if (res.data && res.data.gold) {
+    if (res.data?.gold?.inr_gram_22k) {
       prices = res.data
     }
-  } catch {
-    // If backend proxy fails, try direct fetch as fallback
+  } catch {}
+
+  // Client-side fallback: goldprice.org + er-api.com
+  if (!prices) {
     try {
-      const [metalsRes, fxRes] = await Promise.all([
-        fetch('https://api.metals.live/v1/spot'),
-        fetch('https://open.er-api.com/v6/latest/USD')
+      const [gpRes, fxRes] = await Promise.all([
+        fetch('https://data-asg.goldprice.org/dbXRates/USD'),
+        fetch('https://open.er-api.com/v6/latest/USD'),
       ])
-      const metals = await metalsRes.json()
+      const gp = await gpRes.json()
       const fx = await fxRes.json()
-
-      const gold = metals.find(m => m.metal === 'gold')
-      const silver = metals.find(m => m.metal === 'silver')
-      const usdInr = fx.rates?.INR || 85.5
-
-      if (gold && silver) {
-        const ozToGram = 31.1035
-        const goldIntl = (gold.price * usdInr) / ozToGram
-        const silverIntl = (silver.price * usdInr) / ozToGram
-        const indiaPremium = 1.04
-        const gold24k = Math.round(goldIntl * indiaPremium)
+      const item = gp.items?.[0]
+      const usdInr = fx.rates?.INR || 84.0
+      if (item?.xauPrice && item?.xagPrice) {
+        const OZ = 31.1035, P = 1.04
+        const gold24k = Math.round((item.xauPrice * usdInr / OZ) * P)
         const gold22k = Math.round(gold24k * 0.9167)
-
+        const silverInrGram = Math.round((item.xagPrice * usdInr / OZ) * P)
         prices = {
           gold: {
-            usd_oz: gold.price,
+            usd_oz: Math.round(item.xauPrice * 100) / 100,
+            usd_chg: item.chgXau ?? null,
             inr_gram_24k: gold24k,
             inr_gram_22k: gold22k,
             inr_gram_18k: Math.round(gold24k * 0.75),
@@ -73,13 +75,14 @@ export async function fetchGoldSilverPrices() {
             inr_10g_22k: Math.round(gold22k * 10),
           },
           silver: {
-            usd_oz: silver.price,
-            inr_gram: Math.round(silverIntl * 2.53),
-            inr_100g: Math.round(silverIntl * 2.53 * 100),
-            inr_kg: Math.round(silverIntl * 2.53 * 1000),
+            usd_oz: Math.round(item.xagPrice * 100) / 100,
+            usd_chg: item.chgXag ?? null,
+            inr_gram: silverInrGram,
+            inr_100g: silverInrGram * 100,
+            inr_kg: silverInrGram * 1000,
           },
           usd_inr: Math.round(usdInr * 100) / 100,
-          source: 'Live (metals.live)',
+          source: 'Live (Direct)',
           _ts: Date.now(),
         }
       }
@@ -88,6 +91,6 @@ export async function fetchGoldSilverPrices() {
 
   if (!prices) prices = { ...FALLBACK, _ts: Date.now() }
 
-  sessionStorage.setItem('gold_silver_v5', JSON.stringify(prices))
+  sessionStorage.setItem(CACHE_KEY, JSON.stringify(prices))
   return prices
 }

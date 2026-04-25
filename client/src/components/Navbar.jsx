@@ -14,6 +14,7 @@ const navLinks = [
 ]
 
 const moreDesktopLinks = [
+  { path: '/sports', label: 'Sports & Scores', icon: '🏆' },
   { path: '/officials', label: 'Officials', icon: '👤' },
   { path: '/learn', label: 'News & Articles', icon: '📰' },
   { path: '/healthcare', label: 'Healthcare', icon: '🏥' },
@@ -59,11 +60,14 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`sticky top-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? 'glass shadow-lg shadow-black/[0.03] border-b border-gray-200/40'
-          : 'bg-transparent border-b border-transparent'
-      }`}>
+      <nav
+        className={`sticky top-0 z-50 transition-all duration-500 ${
+          scrolled
+            ? 'glass shadow-lg shadow-black/[0.03] border-b border-gray-200/40'
+            : 'border-b border-white/10'
+        }`}
+        style={!scrolled ? { background: 'linear-gradient(135deg, #0C4A3E 0%, #0E6B52 40%, #18A67A 100%)' } : undefined}
+      >
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2.5 group">
@@ -71,7 +75,7 @@ export default function Navbar() {
                 style={{ background: 'linear-gradient(135deg, #0C4A3E, #14856A)' }}>
                 <span className="text-white font-black text-sm" style={{ fontFamily: 'var(--font-display)' }}>A</span>
               </div>
-              <span className="text-xl font-extrabold tracking-tight text-gradient" style={{ fontFamily: 'var(--font-display)' }}>Annur</span>
+              <span className={`text-xl font-extrabold tracking-tight ${scrolled ? 'text-gradient' : 'text-white'}`} style={{ fontFamily: 'var(--font-display)' }}>Annur</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-1">
@@ -86,12 +90,12 @@ export default function Navbar() {
                     className={`px-3.5 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
                       isActive
                         ? 'text-white shadow-md'
-                        : 'hover:bg-[#0C4A3E]/5'
+                        : scrolled ? 'hover:bg-[#0C4A3E]/5' : 'hover:bg-white/10'
                     }`}
                     style={isActive ? {
-                      background: 'linear-gradient(135deg, #0C4A3E, #14856A)',
+                      background: scrolled ? 'linear-gradient(135deg, #0C4A3E, #14856A)' : 'rgba(255,255,255,0.15)',
                       color: 'white',
-                    } : { color: 'var(--c-text-muted)' }}
+                    } : { color: scrolled ? 'var(--c-text-muted)' : 'rgba(255,255,255,0.85)' }}
                   >
                     {t(link.label)}
                   </Link>
@@ -101,7 +105,7 @@ export default function Navbar() {
               <div className="relative" ref={moreRef}>
                 <button onClick={() => setShowDesktopMore(!showDesktopMore)}
                   className={`px-3 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${showDesktopMore ? 'text-white' : ''}`}
-                  style={showDesktopMore ? { background: 'linear-gradient(135deg, #0C4A3E, #14856A)' } : { color: 'var(--c-text-muted)' }}>
+                  style={showDesktopMore ? { background: 'linear-gradient(135deg, #0C4A3E, #14856A)' } : { color: scrolled ? 'var(--c-text-muted)' : 'rgba(255,255,255,0.85)' }}>
                   More ▾
                 </button>
                 {showDesktopMore && (
@@ -118,15 +122,16 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-              <div className="ml-2 pl-2 border-l border-gray-200/60 flex items-center gap-2">
-                <LanguageToggle />
-                <ThemeToggle />
+              <div className={`ml-2 pl-2 flex items-center gap-2 border-l ${scrolled ? 'border-gray-200/60' : 'border-white/20'}`}>
+                <LanguageToggle transparent={!scrolled} />
+                <ThemeToggle transparent={!scrolled} />
                 {isLoggedIn ? (
                   <Link to="/profile" className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-extrabold text-white" style={{ background: 'linear-gradient(135deg, #0C4A3E, #14856A)' }} title={user?.name}>
                     {user?.name?.charAt(0).toUpperCase()}
                   </Link>
                 ) : (
-                  <Link to="/login" className="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors hover:bg-gray-100" style={{ color: 'var(--c-primary)' }}>
+                  <Link to="/login" className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${scrolled ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}
+                    style={{ color: scrolled ? 'var(--c-primary)' : 'rgba(255,255,255,0.85)' }}>
                     Login
                   </Link>
                 )}
@@ -139,9 +144,9 @@ export default function Navbar() {
               aria-label="Menu"
             >
               <div className="w-5 h-4 flex flex-col justify-between">
-                <span className={`block h-0.5 rounded-full transition-all duration-300 origin-center ${open ? 'rotate-45 translate-y-[7px]' : ''}`} style={{ background: 'var(--c-text)' }} />
-                <span className={`block h-0.5 rounded-full transition-all duration-200 ${open ? 'opacity-0 scale-0' : ''}`} style={{ background: 'var(--c-text)' }} />
-                <span className={`block h-0.5 rounded-full transition-all duration-300 origin-center ${open ? '-rotate-45 -translate-y-[7px]' : ''}`} style={{ background: 'var(--c-text)' }} />
+                <span className={`block h-0.5 rounded-full transition-all duration-300 origin-center ${open ? 'rotate-45 translate-y-[7px]' : ''}`} style={{ background: scrolled ? 'var(--c-text)' : 'white' }} />
+                <span className={`block h-0.5 rounded-full transition-all duration-200 ${open ? 'opacity-0 scale-0' : ''}`} style={{ background: scrolled ? 'var(--c-text)' : 'white' }} />
+                <span className={`block h-0.5 rounded-full transition-all duration-300 origin-center ${open ? '-rotate-45 -translate-y-[7px]' : ''}`} style={{ background: scrolled ? 'var(--c-text)' : 'white' }} />
               </div>
             </button>
           </div>

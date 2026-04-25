@@ -39,6 +39,7 @@ const EMICalculator = lazy(() => import('./pages/EMICalculator.jsx'))
 const FDRDCalculator = lazy(() => import('./pages/FDRDCalculator.jsx'))
 const IncomeTaxCalc = lazy(() => import('./pages/IncomeTaxCalc.jsx'))
 const BMICalculator = lazy(() => import('./pages/BMICalculator.jsx'))
+const Sports = lazy(() => import('./pages/Sports.jsx'))
 
 // Lazy admin pages
 const Dashboard = lazy(() => import('./admin/Dashboard.jsx'))
@@ -80,7 +81,7 @@ function App() {
     <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 antialiased">
       <Navbar />
       <NotificationBanner />
-      <main className="flex-1 pb-16 md:pb-0">
+      <main className="flex-1 pb-[72px] md:pb-0">
         <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -112,6 +113,7 @@ function App() {
           <Route path="/fd-rd-calculator" element={<FDRDCalculator />} />
           <Route path="/income-tax-calculator" element={<IncomeTaxCalc />} />
           <Route path="/bmi-calculator" element={<BMICalculator />} />
+          <Route path="/sports" element={<Sports />} />
           <Route path="/admin/login" element={<Login />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
